@@ -46,12 +46,10 @@ RUN curl -C - --output android-sdk-tools.zip https://dl.google.com/android/repos
 	&& sdkmanager --install "cmdline-tools;latest" 
 
 # Flutter SDK
-ENV FLUTTER_HOME=/flutter
 RUN git clone https://github.com/flutter/flutter.git
-RUN pwd
-RUN ls -all
 # Setup PATH environment variable
-ENV PATH $PATH:/$FLUTTER_HOME:/FLUTTER_HOME/bin
+ENV PATH $PATH:/flutter/bin
+RUN flutter --version
 
 RUN flutter config --android-sdk "${ANDROID_SDK_ROOT}" \
 	&& yes | flutter doctor --android-licenses \
