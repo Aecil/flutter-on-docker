@@ -76,10 +76,8 @@ RUN	sdkmanager --install "cmdline-tools;latest"
 
 # create emulator android	
 RUN  sdkmanager "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64" 
-RUN  avdmanager create avd -n Android${ANDROID_PLATFORM_VERSION} -k "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64"
 
 
-#
 # Flutter SDK
 RUN curl -C - --output flutter.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/${FLUTTER_CHANNEL}/linux/flutter_linux_${FLUTTER_VERSION}-${FLUTTER_CHANNEL}.tar.xz \
 	&& tar -xf flutter.tar.xz -C ~ \
