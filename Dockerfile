@@ -9,7 +9,7 @@ ARG USER_GID=$USER_UID
 # Install needed packages, setup user anda clean up.
 RUN  apt update \
 	&& apt install -y sudo \
-	&& apt install -y openjdk-11-jdk-headless --no-install-recommends \
+	&& apt install -y openjdk-17-jdk-headless --no-install-recommends \
 	&& apt install -y wget curl git xz-utils zip unzip --no-install-recommends 
 	
 	# Clean Up
@@ -49,7 +49,6 @@ RUN curl -C - --output android-sdk-tools.zip https://dl.google.com/android/repos
 RUN git clone https://github.com/flutter/flutter.git
 # Setup PATH environment variable
 ENV PATH $PATH:/flutter/bin
-RUN flutter --version
 
 RUN flutter config --android-sdk "${ANDROID_SDK_ROOT}" \
 	&& yes | flutter doctor --android-licenses \
