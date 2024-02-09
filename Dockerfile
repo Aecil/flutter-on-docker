@@ -33,7 +33,6 @@ ENV ANDROID_HOME=~/android-sdk-linux
 ENV ANDROID_SDK_ROOT="$ANDROID_HOME"
 ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator
 
-
 # Android SDK	
 RUN curl -C - --output android-sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION}_latest.zip \
 	&& mkdir -p ${ANDROID_HOME}/ \
@@ -47,6 +46,7 @@ RUN curl -C - --output android-sdk-tools.zip https://dl.google.com/android/repos
 	&& sdkmanager --install "cmdline-tools;latest" 
 
 # Flutter SDK
+ENV FLUTTER_HOME=/flutter
 RUN git clone https://github.com/flutter/flutter.git
 RUN pwd
 RUN ls -all
