@@ -47,14 +47,9 @@ RUN curl -C - --output android-sdk-tools.zip https://dl.google.com/android/repos
 	&& sdkmanager --install "cmdline-tools;latest" 
 
 # Flutter SDK
-ENV FLUTTER_CHANNEL="stable"
-ENV FLUTTER_VERSION="3.3.4"
-# Make sure to use the needed channel and version for this.
-ENV FLUTTER_HOME=~/flutter
-ENV PATH=${PATH}:${FLUTTER_HOME}/bin
-	
-# Flutter SDK
 RUN git clone https://github.com/flutter/flutter.git
+RUN pwd
+RUN ls -all
 # Setup PATH environment variable
 ENV PATH $PATH:/$FLUTTER_HOME:/FLUTTER_HOME/bin
 
