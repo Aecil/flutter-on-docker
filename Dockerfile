@@ -54,3 +54,9 @@ RUN flutter config --android-sdk "${ANDROID_SDK_ROOT}" \
 	&& yes | flutter doctor --android-licenses \
 	&& flutter config --no-analytics \
 	&& flutter update-packages
+
+ #Install node
+ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash export NVM_DIR=“$HOME/.nvm” [ -s “$NVM_DIR/nvm.sh” ] && .
+“$NVM_DIR/nvm.sh” # This loads nvm [ -s “$NVM_DIR/bash_completion” ] && . “$NVM_DIR/bash_completion” 
+
+RUN nvm install v20.11.0
