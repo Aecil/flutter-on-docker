@@ -63,19 +63,20 @@ ENV PATH=${PATH}:${FLUTTER_HOME}/bin
 
 #
 # Android SDK	
-RUN curl -C - --output android-sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION}_latest.zip \
-	&& mkdir -p ${ANDROID_HOME}/ \
-	&& unzip -q android-sdk-tools.zip -d ${ANDROID_HOME}/cmdline-tools/ \
-	&& rm android-sdk-tools.zip \
-	&& yes | sdkmanager --licenses \
-	&& touch $HOME/.android/repositories.cfg \
-	&& sdkmanager platform-tools \
-	&& sdkmanager emulator \
-	&& sdkmanager "platforms;android-${ANDROID_PLATFORM_VERSION}" "build-tools;$ANDROID_BUILD_TOOLS_VERSION" \
-	&& sdkmanager --install "cmdline-tools;latest" 
+RUN curl -C - --output android-sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION}_latest.zip 
+RUN	mkdir -p ${ANDROID_HOME}/ 
+RUN	unzip -q android-sdk-tools.zip -d ${ANDROID_HOME}/cmdline-tools/ 
+RUN	rm android-sdk-tools.zip 
+RUN	yes | sdkmanager --licenses 
+RUN	touch $HOME/.android/repositories.cfg 
+RUN	sdkmanager platform-tools 
+RUN	sdkmanager emulator \
+RUN	sdkmanager "platforms;android-${ANDROID_PLATFORM_VERSION}" "build-tools;$ANDROID_BUILD_TOOLS_VERSION" \
+RUN	sdkmanager --install "cmdline-tools;latest" 
+
 # create emulator android	
-RUN  sdkmanager "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64" \
-	 && avdmanager create avd -n Android${ANDROID_PLATFORM_VERSION} -k "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64"
+RUN  sdkmanager "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64" 
+RUN  avdmanager create avd -n Android${ANDROID_PLATFORM_VERSION} -k "system-images;android-${ANDROID_PLATFORM_VERSION};google_apis;x86_64"
 
 
 #
