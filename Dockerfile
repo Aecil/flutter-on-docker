@@ -79,9 +79,7 @@ RUN curl -sS https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk
         "build-tools;$ANDROID_TOOLS_VERSION" \
         "cmake;$CMAKE_VERSION" \
         "ndk;$NDK_VERSION" 
-RUN yes | sdkmanager "platform-tools" \
-        "platforms;android-25 \
-        "build-tools;25" \
+RUN yes | sdkmanager "platforms;android-25" "build-tools;25.0.2" "extras;google;m2repository" "extras;android;m2repository" \
         "cmake;$CMAKE_VERSION" \
         "ndk;25.1.8937393" \
     && rm -rf ${ANDROID_HOME}/.android \
