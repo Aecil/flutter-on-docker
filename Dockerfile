@@ -78,8 +78,8 @@ RUN curl -sS https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk
         "platforms;android-$ANDROID_BUILD_VERSION" \
         "build-tools;$ANDROID_TOOLS_VERSION" \
         "cmake;$CMAKE_VERSION" \
-        "ndk;$NDK_VERSION" \
-    && yes | sdkmanager "platform-tools" \
+        "ndk;$NDK_VERSION" 
+RUN yes | sdkmanager "platform-tools" \
         "platforms;android-25 \
         "build-tools;25.0.2" \
         "cmake;$CMAKE_VERSION" \
