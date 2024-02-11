@@ -1,66 +1,88 @@
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
-#Locale
-ENV LANG C.UTF-8
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+LABEL Description="This image provides a base Android development environment for React Native, and may be used to run tests."
 
-# Install needed packages, setup user anda clean up.
-RUN  apt update \
-	&& apt install -y sudo \
-	&& apt install -y openjdk-17-jdk-headless --no-install-recommends \
-	&& apt install -y wget curl git xz-utils zip unzip --no-install-recommends 
-	
-	# Clean Up
-RUN	apt-get autoremove -y \
-	&& apt-get clean -y \
-	&& rm -rf /var/lib/apt/lists/* 
-	# Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
-	# [Optional] Add sudo support for the non-root user
-RUN	groupadd --gid $USER_GID $USERNAME \
-	&& useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
-	&& echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-	&& chmod 0440 /etc/sudoers.d/$USERNAME \
-	&& su $USERNAME \
-	&& cd $HOME
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Android SDK
-ENV ANDROID_SDK_TOOLS_VERSION=8512546
-ENV ANDROID_PLATFORM_VERSION=33
-ENV ANDROID_BUILD_TOOLS_VERSION=33.0.0
-ENV ANDROID_HOME=~/android-sdk-linux
-ENV ANDROID_SDK_ROOT="$ANDROID_HOME"
-ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator
+# set default build arguments
+# https://developer.android.com/studio#command-tools
+ARG SDK_VERSION=commandlinetools-linux-9477386_latest.zip
+ARG ANDROID_BUILD_VERSION=34
+ARG ANDROID_TOOLS_VERSION=34.0.0
+ARG NDK_VERSION=26.1.10909125
+ARG NODE_VERSION=18
+ARG WATCHMAN_VERSION=4.9.0
+ARG CMAKE_VERSION=3.22.1
 
-# Android SDK	
-RUN curl -C - --output android-sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION}_latest.zip \
-	&& mkdir -p ${ANDROID_HOME}/ \
-	&& unzip -q android-sdk-tools.zip -d ${ANDROID_HOME}/cmdline-tools/ \
-	&& rm android-sdk-tools.zip \
-	&& yes | sdkmanager --licenses \
-	&& touch $HOME/.android/repositories.cfg \
-	&& sdkmanager platform-tools \
-	&& sdkmanager emulator \
-	&& sdkmanager "platforms;android-${ANDROID_PLATFORM_VERSION}" "build-tools;$ANDROID_BUILD_TOOLS_VERSION" \
-	&& sdkmanager --install "cmdline-tools;latest" 
+# set default environment variables, please don't remove old env for compatibilty issue
+ENV ADB_INSTALL_TIMEOUT=10
+ENV ANDROID_HOME=/opt/android
+ENV ANDROID_SDK_ROOT=${ANDROID_HOME}
+ENV ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/$NDK_VERSION
 
-# Flutter SDK
-RUN git clone https://github.com/flutter/flutter.git
-# Setup PATH environment variable
-ENV PATH $PATH:/flutter/bin
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV CMAKE_BIN_PATH=${ANDROID_HOME}/cmake/$CMAKE_VERSION/bin
 
-RUN flutter config --android-sdk "${ANDROID_SDK_ROOT}" \
-	&& yes | flutter doctor --android-licenses \
-	&& flutter config --no-analytics \
-	&& flutter update-packages
+ENV PATH=${CMAKE_BIN_PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/emulator:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${PATH}
 
- #Install Node
-RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
-RUN apt-get install -y nodejs
-RUN npm install npm@latest -g
+# Install system dependencies
+RUN apt update -qq && apt install -qq -y --no-install-recommends \
+        apt-transport-https \
+        curl \
+        file \
+        gcc \
+        git \
+        g++ \
+        gnupg2 \
+        libc++1-11 \
+        libgl1 \
+        libtcmalloc-minimal4 \
+        make \
+        openjdk-17-jdk-headless \
+        openssh-client \
+        patch \
+        python3 \
+        python3-distutils \
+        rsync \
+        ruby \
+        ruby-dev \
+        tzdata \
+        unzip \
+        sudo \
+        ninja-build \
+        zip \
+        # Dev libraries requested by Hermes
+        libicu-dev \
+        # Dev dependencies required by linters
+        jq \
+        shellcheck \
+    && gem install bundler \
+    && rm -rf /var/lib/apt/lists/*;
 
- #Install node
-RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
-RUN apt-get install -y nodejs
-RUN npm install npm@latest -g
+# install nodejs using n
+RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
+    && bash n $NODE_VERSION \
+    && rm n \
+    && npm install -g n \
+    && npm install -g yarn
+
+# Full reference at https://dl.google.com/android/repository/repository2-1.xml
+# download and unpack android
+RUN curl -sS https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk.zip \
+    && mkdir -p ${ANDROID_HOME}/cmdline-tools \
+    && unzip -q -d ${ANDROID_HOME}/cmdline-tools /tmp/sdk.zip \
+    && mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest \
+    && rm /tmp/sdk.zip \
+    && yes | sdkmanager --licenses \
+    && yes | sdkmanager "platform-tools" \
+        "platforms;android-$ANDROID_BUILD_VERSION" \
+        "build-tools;$ANDROID_TOOLS_VERSION" \
+        "cmake;$CMAKE_VERSION" \
+        "ndk;$NDK_VERSION" \
+    && yes | sdkmanager "platform-tools" \
+        "platforms;android-25 \
+        "build-tools;25.0.2" \
+        "cmake;$CMAKE_VERSION" \
+        "ndk;$NDK_VERSION" \
+    && rm -rf ${ANDROID_HOME}/.android \
+    && chmod 777 -R /opt/android
