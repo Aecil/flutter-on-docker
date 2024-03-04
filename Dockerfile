@@ -1,3 +1,2 @@
-FROM ubuntu:22.04
-RUN apt-get update -y && apt-get install curl build-essential gdb nasm clang rust-all cmake make golang-go -y
-
+FROM grafana/grafana:latest
+RUN /bin/bash/ -c "grafana-cli plugins install marcusolsson-json-datasource yesoreyeram-infinity-datasource"
