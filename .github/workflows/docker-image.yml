@@ -25,4 +25,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: liceaflax/flutter-on-docker:latest
+          tags: liceaflax/things:latest
