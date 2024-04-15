@@ -1,4 +1,4 @@
-FROM php:8.2-fpm-bullsyeye
+FROM 8.2-fpm-bullseye
 
 ENV ACCEPT_EULA=Y
 
