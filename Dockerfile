@@ -28,7 +28,7 @@ RUN docker-php-ext-configure gd –with-freetype –with-jpeg
 RUN docker-php-ext-install zip mbstring exif pcntl bcmath -j$(nproc) gd intl
 
 # Install Redis and enable it
-RUN pecl install redis && docker-php-ext-enable redis
+RUN pecl install -o -f redis &&  docker-php-ext-enable redis 
 
 # Install the php memcached extension
 RUN pecl install memcached && docker-php-ext-enable memcached
