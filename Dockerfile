@@ -9,14 +9,12 @@ RUN apt-get update && apt-get install -y \
     gnupg2 \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
-    libmemcached-dev \
     libzip-dev \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
     libmcrypt-dev \
     libicu-dev \
-    libmemcached-dev \ 
     libpq-dev \
     zip \
     unzip 
