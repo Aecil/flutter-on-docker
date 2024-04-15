@@ -1,38 +1,74 @@
-FROM node:20-slim
-ARG BUILD_DATE
-ARG VERSION
-ARG VCS_REF
-LABEL org.label-schema.schema-version="1.0" \
-      org.label-schema.name="firebase-tools" \
-      org.label-schema.version=${VERSION} \
-      org.label-schema.build-date=${BUILD_DATE} \
-      org.label-schema.description="Firebase CLI on the NodeJS image" \
-      org.label-schema.url="https://github.com/firebase/firebase-tools/" \
-      org.label-schema.vcs-url="https://github.com/AndreySenov/firebase-tools-docker/" \
-      org.label-schema.vcs-ref=${VCS_REF}
-ENV FIREBASE_TOOLS_VERSION=${VERSION}
-ENV HOME=/home/node
-EXPOSE 4000
-EXPOSE 5000
-EXPOSE 5001
-EXPOSE 8080
-EXPOSE 8085
-EXPOSE 9000
-EXPOSE 9005
-EXPOSE 9099
-EXPOSE 9199
-SHELL ["/bin/bash", "-c"]
-RUN apt-get update && apt-get install -y autoconf g++ libtool make openjdk-17-jre-headless python3 && \
-    npm install -g firebase-tools@${VERSION} typescript && \
-    npm cache clean --force && \
-    firebase setup:emulators:database && \
-    firebase setup:emulators:firestore && \
-    firebase setup:emulators:pubsub && \
-    firebase setup:emulators:storage && \
-    firebase -V && \
-    java -version && \
-    chown -R node:node $HOME
-USER node
-VOLUME $HOME/.cache
-WORKDIR $HOME
-CMD ["bash"]
+FROM php:8.2-fpm-bullsyeye
+
+ENV ACCEPT_EULA=Y
+
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    apt-transport-https \
+    gnupg2 \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libmemcached-dev \
+    libzip-dev \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libmcrypt-dev \
+    libicu-dev \
+    libmemcached-dev \ 
+    libpq-dev \
+    zip \
+    unzip 
+
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash - && sudo apt-get install -y nodejs
+
+# Install PHP extensions zip, mbstring, exif, bcmath, intl
+RUN docker-php-ext-configure gd –with-freetype –with-jpeg 
+RUN docker-php-ext-install zip mbstring exif pcntl bcmath -j$(nproc) gd intl
+
+# Install Redis and enable it
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Install the php memcached extension
+RUN pecl install memcached && docker-php-ext-enable memcached
+
+# Install the PHP pdo_pgsql extention
+RUN docker-php-ext-install pdo_pgsql
+
+# Install PHP Opcache extention
+RUN docker-php-ext-install opcache
+
+# Install the php memcached extension
+pecl install memcached && docker-php-ext-enable memcached
+
+# Install Redis and enable it
+pecl install redis && docker-php-ext-enable redis
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Install prerequisites for the sqlsrv and pdo_sqlsrv PHP extensions.
+# Some packages are pinned with lower priority to prevent build issues due to package conflicts.
+# Link: https://github.com/microsoft/linux-package-repositories/issues/39
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && echo "Package: unixodbc\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
+    && echo "Package: unixodbc-dev\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
+    && echo "Package: libodbc1:amd64\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
+    && echo "Package: odbcinst\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
+    && echo "Package: odbcinst1debian2:amd64\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
+    && apt-get update \
+    && apt-get install -y msodbcsql18 mssql-tools18 unixodbc-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Retrieve the script used to install PHP extensions from the source container.
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/install-php-extensions
+
+# Install required PHP extensions and all their prerequisites available via apt.
+RUN chmod uga+x /usr/bin/install-php-extensions \
+    && sync \
+    && install-php-extensions bcmath ds exif gd intl opcache pcntl pdo_sqlsrv redis sqlsrv zip
+
+# Setting the work directory.
+WORKDIR /var/www/html
