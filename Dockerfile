@@ -34,9 +34,6 @@ RUN docker-php-ext-install pdo_pgsql
 # Install PHP Opcache extention
 RUN docker-php-ext-install opcache
 
-# Install Redis and enable it
-pecl install redis && docker-php-ext-enable redis
-
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
