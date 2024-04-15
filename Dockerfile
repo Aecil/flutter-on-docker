@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip 
 
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash - && sudo apt-get install -y nodejs
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs
 
 # Install PHP extensions zip, mbstring, exif, bcmath, intl
 RUN docker-php-ext-configure gd –with-freetype –with-jpeg 
