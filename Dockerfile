@@ -7,10 +7,20 @@ ENV LANG=en_US.UTF-8 \
 
 # Instalar dependencias necesarias
 RUN apt-get update && \
-    apt-get install -y wget tar unzip openjdk-11-jdk && \
+    apt-get install -y wget tar unzip && \
     rm -rf /var/lib/apt/lists/*
 
-# Crear usuario y grupo para JBoss con UID/GID libres
+# Instalar OpenJDK 8 desde Adoptium (binario oficial)
+RUN wget https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz && \
+    tar xf OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz -C /opt && \
+    rm OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz && \
+    ln -s /opt/jdk8u402-b06 /opt/jdk-8
+
+# Configurar variables de entorno para Java 8
+ENV JAVA_HOME=/opt/jdk-8 \
+    PATH=$PATH:/opt/jdk-8/bin
+
+# Crear usuario y grupo para JBoss
 RUN groupadd -r jboss && \
     useradd -r -g jboss -s /sbin/nologin -c "JBoss AS user" jboss
 
@@ -27,8 +37,7 @@ RUN chmod -R g+rw /opt/wildfly-10.0.0.Final/standalone && \
     chmod -R g+rw /opt/wildfly-10.0.0.Final/domain
 
 # Configurar variables de entorno para WildFly
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 \
-    PATH=$PATH:/opt/wildfly-10.0.0.Final/bin \
+ENV PATH=$PATH:/opt/wildfly-10.0.0.Final/bin \
     WILDFLY_HOME=/opt/wildfly-10.0.0.Final \
     WILDFLY_USER=jboss \
     WILDFLY_MODE=standalone
