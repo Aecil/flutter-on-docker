@@ -1,33 +1,43 @@
-FROM php:8.2-fpm-bullseye
+FROM ubuntu:24.04
 
-ENV ACCEPT_EULA=Y
+# Configuración básica del sistema
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
 
-# Install prerequisites required for tools and extensions installed later on.
-RUN apt-get update \
-    && apt-get install -y apt-transport-https gnupg2 libpng-dev libzip-dev unzip \
-    && rm -rf /var/lib/apt/lists/*
+# Instalar dependencias necesarias
+RUN apt-get update && \
+    apt-get install -y wget tar unzip openjdk-11-jdk && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install prerequisites for the sqlsrv and pdo_sqlsrv PHP extensions.
-# Some packages are pinned with lower priority to prevent build issues due to package conflicts.
-# Link: https://github.com/microsoft/linux-package-repositories/issues/39
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-    && echo "Package: unixodbc\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
-    && echo "Package: unixodbc-dev\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
-    && echo "Package: libodbc1:amd64\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
-    && echo "Package: odbcinst\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
-    && echo "Package: odbcinst1debian2:amd64\nPin: origin \"packages.microsoft.com\"\nPin-Priority: 100\n" >> /etc/apt/preferences.d/microsoft \
-    && apt-get update \
-    && apt-get install -y msodbcsql18 mssql-tools18 unixodbc-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Crear usuario y grupo para JBoss con UID/GID libres
+RUN groupadd -r jboss && \
+    useradd -r -g jboss -s /sbin/nologin -c "JBoss AS user" jboss
 
-# Retrieve the script used to install PHP extensions from the source container.
-COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/install-php-extensions
+# Descargar e instalar WildFly
+WORKDIR /opt
 
-# Install required PHP extensions and all their prerequisites available via apt.
-RUN chmod uga+x /usr/bin/install-php-extensions \
-    && sync \
-    && install-php-extensions bcmath ds exif gd intl opcache pcntl pdo_sqlsrv redis sqlsrv zip
+RUN wget https://download.jboss.org/wildfly/10.0.0.Final/wildfly-10.0.0.Final.tar.gz && \
+    tar xf wildfly-10.0.0.Final.tar.gz && \
+    rm wildfly-10.0.0.Final.tar.gz && \
+    chown -R jboss:jboss wildfly-10.0.0.Final
 
-# Setting the work directory.
-WORKDIR /var/www/html
+# Configurar permisos y propietarios
+RUN chmod -R g+rw /opt/wildfly-10.0.0.Final/standalone && \
+    chmod -R g+rw /opt/wildfly-10.0.0.Final/domain
+
+# Configurar variables de entorno para WildFly
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 \
+    PATH=$PATH:/opt/wildfly-10.0.0.Final/bin \
+    WILDFLY_HOME=/opt/wildfly-10.0.0.Final \
+    WILDFLY_USER=jboss \
+    WILDFLY_MODE=standalone
+
+# Exponer puertos necesarios
+EXPOSE 8080 9990 8787
+
+# Iniciar como usuario jboss
+USER jboss
+
+# Comando para ejecutar el servidor
+CMD ["sh", "-c", "/opt/wildfly-10.0.0.Final/bin/standalone.sh -b=0.0.0.0 -bmanagement=0.0.0.0"]
