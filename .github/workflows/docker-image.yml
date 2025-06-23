@@ -30,6 +30,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/jboss-10.0.0:latest
+          tags: ghcr.io/aecil/jboss-10.0.0:latest
           labels: |
             org.opencontainers.image.source=${{ github.repository_url }}
